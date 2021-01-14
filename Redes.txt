@@ -1,0 +1,243 @@
+#########################################################################################################
+Unidad 1. Fundamentos de redes
+#########################################################################################################
+
+Seccion 1. Capas de protocolos de Red.
+#Modelo OSI
+
+Fisica
+Parte fisica de las conexiones
+
+Enlace
+Conexiones entre tramas de Red
+
+Red
+Gestion de las redes multinodo
+Se transmiten los paquetes
+
+Transporte
+Se encarga de transmitir datagramas.
+Multiplexa las comunicaciones y proporciona recepcion de los paquetes.
+
+Sesion
+Gestiona sesiones, bloques de intercambio entre dos nodos.
+
+Presentacion
+Se encarga del cifrado, compresion y codificacion.
+
+Aplicacion
+Proporciona las aplicaciones (correo, skype, etc).
+
+#Torre de protocolos TCP/IP
+
+Fisica > Cables
+Enlace > Estandares de enlace red Ethernet (802.3) Direccionamiento MAC
+Red > Protocolo IP
+Transporte/Sesion > Protocolos TCP/UDP, envian datagramas.
+Presentacion/Aplicacion > SMTP, FTP, DNS, HTTP, etc.
+
+Seccion 3. Tipo de ataque por capas.
+
+Capa Fisica
+Eavesdropping (Escucha de las comunicaciones)
+Hub Inserting (Conexion fisica)
+
+Capa de Enlace
+MAC Spoofing (Cambiar el valor de la MAC para ocultarla)
+MAC Flooding (Envia muchas Direcciones MAC que van a los routers saturando al switch permitiendo broadcast y monitorear) 
+ARP Poisoning (El equipo empieza a Responder a las consultas que van a otro)
+DNS Spoofing (Cambia la tabla DNS para redirigir)
+DHCP Starvation (Denegacion de servicio a nuevos usuarios y registra en la tabla DHCP llenandola)
+Rogue DHCP (Cambia el servidor DHCP y lo reemplaza por uno falso con una IP y les indica el Gateway controlando el enrutamiento)
+
+Capa de Red
+IP Spoofing (Enviar paquetes con una IP remitente a otro equipo)
+Sniffing (Capturar trafico de red -wireshark-)
+Man-in-the-middle (Incluir un equipo en el medio de la comunicacion)
+ICMP Flooding (Denegacion de servicio llenando de ICMPS saturando la conexion -pings-)
+Smurf (igual que flooding pero obtener respuestas al ping objetivo)
+Ping of death (Crear solicitudes ping con solicitudes pesadas [hoy ya no va])
+
+Capa de Transporte
+TCP Flooding (Llena de creaciones de sesiones TCP)
+UDP Flooding (Envia a todos los puertos UDP saturandolos con trafico)
+
+Seccion 4. Seguridad en redes inalambricas
+Dependen del cifrado solo para no ser vulneradas
+
+Cifrado WEP (murio en 2004)
+Facil de tirar con fuerza bruta
+
+Cifrado WPA/WPA2
+Usa el cifrado AES
+Sacar la clave por fuerza bruta tarda mucho
+Krack attack > Permite acceder al contenido sin cifrar pero sin encontrar la PW
+Sensible a Yammers (inhibidores de signal)
+
+#########################################################################################################
+Unidad 2. Analisis y trafico de redes
+#########################################################################################################
+
+Seccion 1. Identificacion de equipos de red
+
+NMAP > es para buscar puertos abiertos
+Una herramienta Nmap grafica es Zenmap
+man NMAP
+Muestra todas las opciones que Tiene
+
+Testeo para averiguar la IP del server.
+Escanear un servidor asi es delito xD. Usar sitios de prueba
+
+nmap -sL testphp.vulnweb.com > Obtenes la IP y el DNS
+nmap -sn  176.28.50.165 (ping a la dir de la web)
+nmap 176.28.50.165 (Te muestra todos los puertos abiertos)
+nmap -sn 192.168.173.1 [dir de red y mascara](Equipos internos)
+nmap -O 192.168.0.119 (Te da el sistema operativo y los puertos abiertos)
+
+
+Seccion 2. Captura de trafico o Sniffing 
+
+Wireshark usa NCAP (paquet tracer o capturador de paquetes)
+Si usas HTTP no cifras la informacion y podes capturar la PW y el User
+Una manera de proteger la red interna es usando IPSec
+Si pasa por TLS viaja cifrado
+Con el DNS podes ver a donde se conecta
+
+Seccion 3. Analisis de peticiones DNS
+
+nslookup > Entrega las DNS del equipo
+set type=NS > Entrega los nameserver
+set type=MX > Entrega los servidores MX
+
+
+#########################################################################################################
+Unidad 3. Ataques en capa de red
+#########################################################################################################
+
+
+Seccion 2. Ataques en capa de enlace de red.
+
+MAC Spoofing (Kali):
+
+man macchanger (nos da las opciones)
+Se puede cambiar al fabricante, el tipo del dispositivo, la MAC completa.
+macchanger -b --mac=00:11:22:33:44:55 eth0
+macchanger -a eth0 (estableceer siempre el dispositivo de red)
+
+
+Seccion 3. Ataque MAC Flooding (Kali).
+
+Man > Muestra las opciones disponibles.
+man macof
+
+macof -i eth0 -d 192.168.173.2 (Ataque al Gateway) PASARELA DE COMUNICACIONES : )
+
+Hace un flooding al switch forzandolo al switch para comportarse en modo broadcast
+Llena la tabla CAM
+
+
+Seccion 4. ARP Poisoning y ARP Spoofing
+Envia mensajes ARP falsos para que la MAC source (envio) termine 
+asociada a la IP destino.
+
+Busco los equipos que esten dentro de la red.
+nmap -sn 192.168.173.0/24
+
+aprspoof -h (help)
+aprspoof -i eth- -t 192.168.173.54 -r 192.168.173.2 (primero la IP objetivo, luego el Gateway)
+
+Por ejemplo si tiras ping desde la maquina destino, se van a colgar, porque la tabla ARP
+hizo el cambio y esa maquina se quedo sin salida. Quedo un Man-in-the-Middle. Bloquea la comunicacion.
+Ethercap (averiguar) Peligra disponibilidad, confidencialidad.
+
+
+Seccion 5. DNS Spoofing.
+El destino cambia la DNS a otra y la tabla de redireccionamiento cambia a una a eleccion.
+
+System/var/www/html/index.html
+Dejamos solo el body del file.
+<h1>DNS spoofed</h1> dentro del body
+
+Levantar el Apache incluido
+service apache2 Start
+
+Luego sigue configurar Ethercap
+System/etc/ettercap/ettercap.conf y ettercap.DNS
+
+En el DNS. hacemos lo mismo que en el Hosts de windows
+En el .conf modificamos:
+ec_uid = 0
+ec_gid = 0
+redir_command_on > le sacamos el # commnent
+redir_command_off > le sacamos el # comment
+
+Abrimos ettercap.
+Sniff > Unified Sniffing > escucha activa y le damos a la interfaz.
+
+Start > Start Sniffing.
+Hosts > Scan for hosts. Le damos add to target1 a la red que queremos escuchar.
+Mitm > Le damos un ARP Poisoning.
+Pluguins > Manage > dnsspoof
+
+
+Seccion 6. DHCP Starvation
+
+yersinia -I (modo con interfaz)
+Elegis la interfaz de red.
+Con X arrancas el programa y mandas el 1, denegacion de servicio.
+Hace solicitudes de descubrimiento lo cual satura.
+
+
+Seccion 7. IP Spoofing
+
+iptables -t nat -APOSROUTING -j SNAT --to-source 192.168.173.2 (ip gateway)
+-t nat > Queremos modificar la tabla de NAT ip
+-j establece el objetivo SNAT (Traduccion)
+Lo que hace es hacerle entender que nuestra interfaz de red se va a comportar
+como un router traducciendo dirs ips indicando que el origen es otro.
+Cuando el destino responda contra nuestros paquetes la MAC en su tabla de red
+va a ser distinta a la nuestra. 
+
+Para volver a la normalidad
+iptables -t nat -v -L POSTROUTING -n --line-number
+iptables -t nat -D POSTROUTING 1
+
+EL Ip Spoofing sirve como para que las respuestas que recibe la pc se
+coma un DOS (denegacion del service)
+
+
+
+#########################################################################################################
+Unidad 4. Ataques a servidores Web
+#########################################################################################################
+
+Seccion 1. tipos de solicitudes HTTP y analisis de HTTP Get.
+
+Las solicitudes HTTP son de capa de aplicacion.
+Puerto 80 HTTP y 443 HTTPS.
+
+GET para soliciud de datos
+POST para enviar datos 
+GET es como post pero envia info para escribir en disco
+HEAD como get pero no espera respuesta
+DELETE es para borrar algo
+PATCH es para cambios parciales
+OPTIONS es para ver las opciones que hay de solicitudes
+
+Para ver en wireshark click derecho, follow > http stream
+
+
+Seccion 2. OWASP 
+
+Se encargan de la seguridad de las paginas. Es una organizacion.
+www.owasp.org
+
+
+
+
+
+
+
+
+
+
